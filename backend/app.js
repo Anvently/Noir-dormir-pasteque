@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const bp = require('body-parser');
 
 const deck = ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"];
 
@@ -24,11 +25,15 @@ function generateCards(cards=[]) {
 }
 
 app.use(express.json());
+app.use(bp.json());
+app.use(bp.urlencoded({ extended: true }));
+
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.setHeader('Content-Type','application/json');
   next();
 });
 
@@ -41,7 +46,7 @@ app.post('/register_player', (req, res, next) => {
   var id=players.length+1;
   var crypto = require("crypto");
   var pswd = crypto.randomBytes(20).toString('hex');
-  player={name: req.name, password: pswd, id: id, cards: generateCards(), cards_played: null};
+  player={name: req.body.name, password: pswd, id: id, cards: generateCards(), cards_played: []};
   players.push(player);
   console.log(player);
   res.status(201).json(player);

@@ -527,7 +527,7 @@
 			dragObj=undefined;
 			oldObj=undefined;
 			balise=undefined;
-			player = {};
+			player = {name:"test"};
 			const url = "http://localhost:3000/";
 			
 			if (window.matchMedia('(min-width: 1000px)')) {
@@ -661,7 +661,7 @@
 				id="carte"+balise.id.slice(-1);
 				document.getElementById(id).className="carte";
 				document.getElementById(id).querySelector("p").innerHTML=card.querySelector("p").innerHTML;
-				player.carte_joues[parseInt(id.slice(-1))]=card.querySelector("p").innerHTML;
+				player.cards_played[parseInt(id.slice(-1))]=card.querySelector("p").innerHTML;
 				
 			}
 			function addCard(text) {
@@ -681,7 +681,7 @@
 					balise.innerText="□";
 					balise.style.fontSize=size[2];
 					balise.style.backgroundColor="transparent";
-					player.carte_joues[parseInt(balise.id.slice(-1))]=undefined;
+					player.cards_played[parseInt(balise.id.slice(-1))]=undefined;
 
 				}				
 			}
@@ -728,54 +728,28 @@
 					console.log(typeof(data));
 					});
 			}
+
 			
 			function register(pseudo) {
 
 				$.post(url+"register_player",{name:pseudo}, function (data, status){
 							player = data;
-							console.log(data);
-							
 					});
 				
 					
 			}
+		
 
-			function gettTest() {
-				let req = new XMLHttpRequest();
-				req.open("GET", 'http://localhost:3000/api/stuff');
-				req.responseType="json";
-				req.withCredentials=false;
-				req.send();
-				req.onload = function () {
-					if (req.status != 200) {
-						alert("Erreur " + req.status + " " + req.statusText);
-					} else {
-						alert(JSON.stringify(req.response));
-					}
-				}
-				//Si la requête n'a pas pu aboutir...
-				req.onerror = function(){
-					alert("La requête a échoué");
-				};
-
-				//Pendant le téléchargement...
-				req.onprogress = function(event){
-					//lengthComputable = booléen; true si la requête a une length calculable
-					if (event.lengthComputable){
-						//loaded = contient le nombre d'octets téléchargés
-						//total = contient le nombre total d'octets à télécharger
-						alert(event.loaded + " octets reçus sur un total de " + event.total);
-					}
-				}
+			function getTest() {
+				console.log(player);
 			}
 			
 			register("herroP");
-			console.log(player);
-			
+
 			document.addEventListener("touchstart", touchHandler);
 			document.addEventListener("touchmove", touchHandler);
 
-
+		
 
 
 		</script> 
