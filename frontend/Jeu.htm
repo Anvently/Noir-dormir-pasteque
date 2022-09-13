@@ -196,6 +196,7 @@
 			}
 		</style>
 		<style media="screen and (max-width: 1000px)">
+		
 			body
 			{
 				height: 98vh;
@@ -395,7 +396,8 @@
 				
 			}
 		</style>
-    </head>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	</head>
 	
 	
     <body>
@@ -455,6 +457,8 @@
 					</div>
 				</div>
 				<p><span id="timer">59s</span></p>
+				<button id="btn" onclick="getTest()">Click</button>
+
 			</aside>
 		</div>
 		
@@ -517,12 +521,15 @@
 					
 
 		</div>
+		
 		<script>
 			mode=undefined;
-			carte_joues=[];
 			dragObj=undefined;
 			oldObj=undefined;
 			balise=undefined;
+			player = {};
+			const url = "http://localhost:3000/";
+			
 			if (window.matchMedia('(min-width: 1000px)')) {
 				size = ["1.2vw","1.3vw","2vw","2.1vw"];
 			} else if (window.matchMedia('(max-width: 1000px)')) {
@@ -654,7 +661,7 @@
 				id="carte"+balise.id.slice(-1);
 				document.getElementById(id).className="carte";
 				document.getElementById(id).querySelector("p").innerHTML=card.querySelector("p").innerHTML;
-				carte_joues[parseInt(id.slice(-1))]=card.querySelector("p").innerHTML;
+				player.carte_joues[parseInt(id.slice(-1))]=card.querySelector("p").innerHTML;
 				
 			}
 			function addCard(text) {
@@ -674,7 +681,7 @@
 					balise.innerText="□";
 					balise.style.fontSize=size[2];
 					balise.style.backgroundColor="transparent";
-					carte_joues[parseInt(balise.id.slice(-1))]=undefined;
+					player.carte_joues[parseInt(balise.id.slice(-1))]=undefined;
 
 				}				
 			}
@@ -715,7 +722,56 @@
 					false, false, false, 0, null);
 				touch.target.dispatchEvent(simulatedEvent);
 			}
+			
+			function get(type="",) {
+				$.get("http://localhost:3000/"+type, function (data, status){
+					console.log(typeof(data));
+					});
+			}
+			
+			function register(pseudo) {
 
+				$.post(url+"register_player",{name:pseudo}, function (data, status){
+							player = data;
+							console.log(data);
+							
+					});
+				
+					
+			}
+
+			function gettTest() {
+				let req = new XMLHttpRequest();
+				req.open("GET", 'http://localhost:3000/api/stuff');
+				req.responseType="json";
+				req.withCredentials=false;
+				req.send();
+				req.onload = function () {
+					if (req.status != 200) {
+						alert("Erreur " + req.status + " " + req.statusText);
+					} else {
+						alert(JSON.stringify(req.response));
+					}
+				}
+				//Si la requête n'a pas pu aboutir...
+				req.onerror = function(){
+					alert("La requête a échoué");
+				};
+
+				//Pendant le téléchargement...
+				req.onprogress = function(event){
+					//lengthComputable = booléen; true si la requête a une length calculable
+					if (event.lengthComputable){
+						//loaded = contient le nombre d'octets téléchargés
+						//total = contient le nombre total d'octets à télécharger
+						alert(event.loaded + " octets reçus sur un total de " + event.total);
+					}
+				}
+			}
+			
+			register("herroP");
+			console.log(player);
+			
 			document.addEventListener("touchstart", touchHandler);
 			document.addEventListener("touchmove", touchHandler);
 
@@ -723,6 +779,6 @@
 
 
 		</script> 
-    
+		
 
 </body></html>
