@@ -457,13 +457,13 @@
 					</div>
 				</div>
 				<p><span id="timer">59s</span></p>
-				<button id="btn" onclick="getTest()">Click</button>
+				<button id="btn" onclick="sendCards()">Click</button>
 
 			</aside>
 		</div>
 		
 		<div id="main">
-				<div class="carte">
+				<div class="carte" style='visibility:collapse'>
 					<header>
 						<h1>herroP</h1>
 					</header>
@@ -472,52 +472,6 @@
 					</div>
 				</div>
 					
-				<div class="carte">
-					<header>
-						<h1>herroP</h1>
-					</header>
-					<div class="content">
-						<p>21cm de bohneur</p>
-					</div>
-				</div>
-				
-				<div class="carte">
-					<header>
-						<h1>herroP</h1>
-					</header>
-					<div class="content">
-						<p>Le botox</p>
-					</div>
-				</div>
-					
-				<div class="carte">
-					<header>
-						<h1>herroP</h1>
-					</header>
-					<div class="content">
-						<p>Petits efforts, gros résultats</p>
-					</div>
-				</div>
-				
-				
-				
-				<div class="carte">
-					<header>
-						<h1>herroP</h1>
-					</header>
-					<div class="content">
-						<p>Les grands donateurs de la banque de sperme</p>
-					</div>
-				</div>
-				
-				<div class="carte">
-					<header>
-						<h1>herroP</h1>
-					</header>
-					<div class="content">
-						<p>Les grands donateurs de la banque de sperme</p>
-					</div>
-				</div>
 					
 
 		</div>
@@ -669,11 +623,12 @@
 				text=text.charAt(0).toUpperCase() + text.slice(1);
 				new_card.querySelector("p").innerHTML=text;
 				new_card.querySelector("h1").innerHTML=playerName;
+				new_card.style.visibility="visible";
 				document.getElementById("main").appendChild(new_card);
 				new_card.addEventListener('mousedown', initDnD);
 			}
 			function removeCard(e) {
-				if (balise && balise.innerText!="□") { 
+				if (balise && balise.innerText!="□" && mode != "VOTE") { 
 					carte=document.getElementById("carte"+balise.id.slice(-1));
 					carte.querySelector("p").innerText="Placez une carte dans un trou.";
 					carte.className="carte joue vide";
@@ -685,7 +640,14 @@
 
 				}				
 			}
-
+			
+			function deleteCards() {
+				let main =  document.getElementById("main");
+				while (main.children.length > 1) {
+					main.removeChild(main.lastChild);
+				}
+			}
+			
 			function endDnD(e) {
 				
 				if (mode!="VOTE" && dragObj != undefined) {
@@ -733,10 +695,29 @@
 			function register(pseudo) {
 
 				$.post(url+"register_player",{name:pseudo}, function (data, status){
-							player = data;
+							if (status == "success") {
+								player = data;
+								for (card in player.cards) {
+									addCard(player.cards[card]);
+								}
+							}
+							
 					});
-				
-					
+						
+			}
+			
+			function sendCards() {
+				$.post(url+"send_cards",{id:player.id,password:player.password,cards_played:player.cards_played}, function (data, status){
+						if (status == "success") {
+							mode = "VOTE";
+							player = data;
+							deleteCards();
+							for (card in player.cards) {
+									addCard(player.cards[card]);
+								}
+								
+						}		
+				});
 			}
 		
 

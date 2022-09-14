@@ -5,11 +5,11 @@ const bp = require('body-parser');
 const deck = ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"];
 
 const players = [
-	{name: "herroZ", password: "bbb", id: 2, cards: ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"],cards_played: ["l'aspirine","pépé dans mémé"]},
-	{name: "herroB", password: "ccc", id: 3, cards: ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"],cards_played: ["l'aspirine","pépé dans mémé"]},
-	{name: "Magie", password: "ddd", id: 4, cards: ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"],cards_played: ["l'aspirine","pépé dans mémé"]},
-	{name: "TOM", password: "eee", id: 5, cards: ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"],cards_played: ["l'aspirine","pépé dans mémé"]},	
-	{name: "TEX", password: "fff", id: 6, cards: ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"],cards_played: ["l'aspirine","pépé dans mémé"]}	
+	{name: "herroZ", password: "bbb", id: 1, cards: ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"],cards_played: ["l'aspirine","pépé dans mémé"]},
+	{name: "herroB", password: "ccc", id: 2, cards: ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"],cards_played: ["l'aspirine","pépé dans mémé"]},
+	{name: "Magie", password: "ddd", id: 3, cards: ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"],cards_played: ["l'aspirine","pépé dans mémé"]},
+	{name: "TOM", password: "eee", id: 4, cards: ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"],cards_played: ["l'aspirine","pépé dans mémé"]},	
+	{name: "TEX", password: "fff", id: 5, cards: ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"],cards_played: ["l'aspirine","pépé dans mémé"]}	
 ];
 
 function getRandomInt(max) {
@@ -22,6 +22,18 @@ function generateCards(cards=[]) {
 	}
 	return cards;
 	
+}
+
+function check_ids (id,pswd) {	
+	for (player of players) {
+		if (player.id == id && player.password==pswd) {return true;}
+	}
+}
+
+function findID(id) {
+	for (i = 0; i < players.length; i++){
+		if (players[i].id == id) {return i;}
+	}
 }
 
 app.use(express.json());
@@ -48,8 +60,17 @@ app.post('/register_player', (req, res, next) => {
   var pswd = crypto.randomBytes(20).toString('hex');
   player={name: req.body.name, password: pswd, id: id, cards: generateCards(), cards_played: []};
   players.push(player);
-  console.log(player);
   res.status(201).json(player);
+});
+
+app.post('/send_cards', (req, res, next) => {
+	if (check_ids(req.body.id,req.body.password)) {  
+	  id = findID(req.body.id);
+	  players[id].cards_played=req.body.cards_played;
+	  players[id].cards=generateCards(players[id].cards);
+	  console.log(players[id].cards_played);
+	  res.status(201).json(players[id]);
+	} else {res.status(401).json({message:"Erreur d'authentification"}); console.log('erreu');}
 });
 
 app.get('/cards', (req, res, next) => {
