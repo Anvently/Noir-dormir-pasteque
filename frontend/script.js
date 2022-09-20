@@ -1,10 +1,11 @@
-mode=undefined;
+mode="ROOM";
 dragObj=undefined;
 oldObj=undefined;
 balise=undefined;
 player = {name:"test"};
 const url = "http://localhost:3000/";
 player_list =[];
+timer=null;
 
 if (window.matchMedia('(min-width: 1000px)')) {
 	size = ["1.2vw","1.3vw","2vw","2.1vw"];
@@ -22,11 +23,15 @@ document.addEventListener("touchend", endDnD);
 
 
 function initQuestion(question) {
+	plateau=document.getElementById("bottom_plateau");
+	while (plateau.children.length > 1) {
+		plateau.removeChild(plateau.lastChild);
+	}
 	count=0;
 	while (question.search(/(?!>)□(?!<)/) > -1 ) {
-		question = question.replace(/(?!>)□(?!<)/,"<span class='balise' id='balise"+count.toString()+"'>□</span>");
+		question = question.replace(/(?!>)□(?!<)/,"<span class='balise' id='balise_"+count.toString()+"'>□</span>");
 		newCarte=document.getElementById("carte_question").cloneNode(true);
-		newCarte.id="carte"+count.toString();
+		newCarte.id="carte_"+count.toString();
 		newCarte.style.visibility="visible";
 		newCarte.querySelector("h1").innerHTML="Carte "+(count+1).toString();
 		document.getElementById("bottom_plateau").appendChild(newCarte);
@@ -47,7 +52,7 @@ function getText(obj) {
 }
 
 function initDnD(e) {
-	if (mode!="VOTE") {
+	if (mode=="PLAY") {
 		var x = e.currentTarget.offsetLeft;
 		var y = e.currentTarget.offsetTop;
 		dragObj=e.currentTarget.cloneNode(true);
@@ -125,19 +130,19 @@ function baliseHover(el, force = false) {
 
 function insertCard(balise,card) {
 	if (balise.innerHTML!="□") {
-		addCard(balise.innerHTML);
+		addCard(balise.innerText);
 	}
 	else {
 		balise.style.backgroundColor="#6a9fab";
 	}
-	balise.innerHTML=card.querySelector("p").innerHTML.toLowerCase();
+	contenu=card.querySelector("p").innerHTML;
+	balise.innerHTML=contenu.toLowerCase();
 	balise.style.fontSize=getComputedStyle(balise.parentNode).fontSize;
-	balise.addEventListener("mousedown",removeCard);
-	id="carte"+balise.id.slice(-1);
+	id="carte_"+balise.id.split("_").at(-1);
 	document.getElementById(id).className="carte";
-	document.getElementById(id).querySelector("p").innerHTML=card.querySelector("p").innerHTML;
-	player.cards_played[parseInt(id.slice(-1))]=card.querySelector("p").innerHTML;
-	
+	document.getElementById(id).querySelector("p").innerHTML=contenu;
+	player.cards_played[parseInt(id.split("_").at(-1))]=contenu.toLowerCase();
+	balise.addEventListener("mousedown",removeCard);
 }
 function addCard(text) {
 	new_card=document.getElementById("main").children[0].cloneNode(true);
@@ -149,15 +154,15 @@ function addCard(text) {
 	new_card.addEventListener('mousedown', initDnD);
 }
 function removeCard(e) {
-	if (balise && balise.innerText!="□" && mode != "VOTE") { 
-		carte=document.getElementById("carte"+balise.id.slice(-1));
+	if (balise && balise.innerText!="□" && mode == "PLAY") { 
+		carte=document.getElementById("carte_"+balise.id.at(-1));
 		carte.querySelector("p").innerText="Placez une carte dans un trou.";
 		carte.className="carte joue vide";
 		addCard(balise.innerText);
 		balise.innerText="□";
 		balise.style.fontSize=size[2];
 		balise.style.backgroundColor="transparent";
-		player.cards_played[parseInt(balise.id.slice(-1))]=undefined;
+		player.cards_played[parseInt(balise.id.split("_").at(-1))]=undefined;
 
 	}				
 }
@@ -171,7 +176,7 @@ function deleteCards() {
 
 function endDnD(e) {
 	
-	if (mode!="VOTE" && dragObj != undefined) {
+	if (mode== "PLAY" && dragObj != undefined) {
 		oldObj.style.visibility = "visible";
 		if (balise) {
 			insertCard(balise,oldObj);
@@ -236,9 +241,7 @@ function register(pseudo) {
 	$.post(url+"register_player",{name:pseudo}, function (data, status){
 				if (status == "success") {
 					player = data;
-					for (card in player.cards) {
-						addCard(player.cards[card]);
-					}
+					
 					window.parent.document.title = player.name;
 				}
 				
@@ -278,17 +281,60 @@ function update() {
 						if (up == "new_player") {
 							updateScores();
 						} else if (up == "player_left") {
-							console.log(player_list);
 							deletePlayer();
+						} else if (up == "new_game") {
+							deleteCards();
+							player.cards = data.player.cards;
+							for (card of player.cards) {
+								addCard(card);
+							}
+						} else if (up == "new_round") {
+							initQuestion(data.question);
+							mode = "PLAY";
+							document.getElementById("btn_launch").disabled=true;
+							document.getElementById("btn_launch").innerText="Voter";
+						} else if (up == "timer_start") {
+							if (timer && timer.online == true) {updateTimer(true);}
+							document.getElementById("btn_launch").disabled=true;
+							timer = data.timer;
+							timer.id = setInterval(() => {
+								updateTimer();
+						},1000);
+						} else if (up == "end_round") {
+							if (timer.online) {updateTimer(true);}
+							mode="VOTE"
+							sendCards();
+							
+						} else if (up == "start_vote") {
+							mode="VOTE";
 						}
+						
 					}
 				}
 					
 			}		
 		});
 }
-
+function updateTimer(end) {
+	timer.time--;
+	document.getElementById("timer").innerText=timer.time+"s";
+	if (timer.time == 0 || end == true) {
+		clearInterval(timer.id);
+		timer.id=null;
+		timer.online=false;
+		document.getElementById("timer").innerText="";
+	}
+}
+function askLaunch() {
+	$.post(url+"ask_launch",{id:player.id,password:player.password}, function (data, status){
+			if (status == "success") {
+				document.getElementById("btn_launch").disabled=true;
+			}		
+	});
+	
+}
 function sendCards() {
+	console.log(player.cards_played);
 	$.post(url+"send_cards",{id:player.id,password:player.password,cards_played:player.cards_played}, function (data, status){
 			if (status == "success") {
 				mode = "VOTE";
@@ -304,11 +350,11 @@ function sendCards() {
 
 
 function stop() {
-	if (timer) {clearInterval(tick);
-		timer=null;
+	if (timer_update) {clearInterval(tick);
+		timer_update=null;
 		document.getElementById("btn").innerText="Allumer";
 		console.log("éteint");}
-	else {tick = setInterval(function(){update();}, 2000);timer=true;console.log("allumé");document.getElementById("btn").innerText="Eteindre";}
+	else {tick = setInterval(function(){update();}, 2000);timer_update=true;console.log("allumé");document.getElementById("btn").innerText="Eteindre";}
 }
 document.addEventListener("touchstart", touchHandler);
 document.addEventListener("touchmove", touchHandler);
@@ -316,7 +362,8 @@ window.addEventListener('beforeunload', quit);
 
 register(prompt("Entrez votre pseudo", ""));
 
-timer=true;
+
+timer_update=true;
 
 
 
@@ -327,7 +374,7 @@ tick = setInterval(function(){
 }, 2000);
 
 setTimeout(function () {
-	getQuestion();
+	//more code
 },2000);
 
 
