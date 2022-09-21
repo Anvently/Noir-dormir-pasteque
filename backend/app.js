@@ -7,13 +7,15 @@ const deck = ["les grands donateurs de la banque de sperme","le botox","21cm de 
 const timer = {id:null,duration:null,time:null,message:null,type:null,online:false,end:null};
 const players = [
 	//{name: "herroZ", updates: [], password: "bbb", id: 1, cards: ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"],cards_played: ["l'aspirine","pépé dans mémé"]},
+	//{name: "herroN", updates: [], password: "bbb", id: 2, cards: ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"],cards_played: ["l'aspirine","brigitte"]}
 ];
 round=0;
-mode = "ROOM";
-const options = {game_launch_duration:3,round_launch_duration:10,round_duration:10,vote_duration:300,end_round_duration:10}
+mode = "VOTE";
+const options = {game_launch_duration:3,round_launch_duration:10,round_duration:25,vote_duration:300,end_round_duration:5}
 
 const player_list = [
-	//{name: "herroZ", id: 1, nbr_votes: 0, score: 0, cards_played: [], hasPlayed: false},
+	//{name: "herroZ", id: 1, nbr_votes: 0, vote_for: undefined, score: 0, cards_played: ["l'aspirine","pépé dans mémé"], hasPlayed: true},
+	//{name: "herroN", id: 2, nbr_votes: 0, vote_for: undefined, score: 0, cards_played: ["l'aspirine","brigitte"], hasPlayed: true}
 	];
 
 function getRandomInt(max) {
@@ -34,7 +36,12 @@ function check_ids (id,pswd) {
 	}
 }
 
-function findID(id) {
+function findID(id,player_list) {
+	if (player_list) {
+		for (i = 0; i < player_list.length; i++){
+			if (player_list[i].id == id) {return i;}
+		}
+	}
 	for (i = 0; i < players.length; i++){
 		if (players[i].id == id) {return i;}
 	}
@@ -43,6 +50,8 @@ function findID(id) {
 function pickQuestion() {
 	return questions[getRandomInt(questions.length)];
 }
+
+
 
 
 question = pickQuestion();
@@ -67,6 +76,7 @@ app.get('/test', (req, res, next) => {
 app.post('/update', (req, res, next) => {
 	if (check_ids(req.body.id,req.body.password)) {
 		id = findID(req.body.id);
+		if (mode=="VOTE" && req.body.vote_for != player_list[id].vote_for) {handleVote(id,req.body.vote_for);}
 		ans = {player_list: player_list,player: undefined,timer:{id:null,time:timer.time,duration:timer.duration,type:timer.type,online:timer.online},question:question};
 		if (players[id].updates) {ans.player=players[id];}
 		res.status(201).json(ans);
@@ -77,7 +87,7 @@ app.post('/update', (req, res, next) => {
 });
 
 app.post('/register_player', (req, res, next) => {
-  var id=players.length > 0 && players.at(-1).id+1 || 0;
+  var id=players.length > 0 && players.at(-1).id+1 || 1;
   var crypto = require("crypto");
   var pswd = crypto.randomBytes(20).toString('hex');
   player={name: req.body.name, password: pswd, cards_played: [], id: id, cards: [], updates: ['new_player']};
@@ -94,7 +104,7 @@ app.post('/register_player', (req, res, next) => {
   }
   if (timer.online==true) {player.updates.push("timer_start");}
   players.push(player);
-  player_list.push({name: player.name, id: id, nbr_votes: 0, score: 0, cards_played: [], hasPlayed:false});
+  player_list.push({name: player.name, id: id, vote_for: undefined, nbr_votes: 0, score: 0, cards_played: [], hasPlayed:false});
   console.log(player.name+" a rejoint la partie. "+player_list.length+" joueurs.");
   console.log(player_list);
   
@@ -175,6 +185,33 @@ function startVote() {
 		player.updates.push("start_vote");
 	}
 	console.log("Démarrage du vote");
+	timer.id = setInterval(() => {
+				handleTimer();
+			},1000);
+	timer.type="VOTE";
+	timer.end=endVote;
+	timer.online=true;
+	timer.message="Fin du vote dans  ";
+	timer.duration=options.vote_duration;
+	timer.time=options.vote_duration;
+}
+
+function handleVote(i, vote_for) {
+	console.log(player_list);
+	//on retire l'ancien vote si il y en a un
+	if (player_list[i].vote_for) {
+		let id = findID(player_list[i].vote_for,player_list);
+		player_list[id].nbr_votes--;
+	}
+	// on ajoute le nouveau vote
+	let id = findID(vote_for,player_list);
+	player_list[id].nbr_votes++;
+	player_list[i].vote_for=vote_for;
+	
+}
+
+function endVote() {
+	console.log("Fin du vote");
 }
 
 function checkPlayerRep() {
@@ -205,21 +242,28 @@ function filterCards(cards,cards_played) {
 
 app.post('/ask_launch', (req, res, next) => {
   if (check_ids(req.body.id,req.body.password)) {
-		if (!timer.online) {
-			timer.id = setInterval(() => {
-				handleTimer();
-			},1000);
-			timer.type="LAUNCH";
-			timer.end=launchGame;
-			timer.online=true;
-			timer.message="Début de la partie dans ";
-			timer.duration=options.game_launch_duration;
-			timer.time=options.game_launch_duration;
-			for (player of players) {
-				player.updates.push("timer_start");
-			}
+		if (mode == "ROOM") {
+			if (!timer.online) {
+				timer.id = setInterval(() => {
+					handleTimer();
+				},1000);
+				timer.type="LAUNCH";
+				timer.end=launchGame;
+				timer.online=true;
+				timer.message="Début de la partie dans ";
+				timer.duration=options.game_launch_duration;
+				timer.time=options.game_launch_duration;
+				for (player of players) {
+					player.updates.push("timer_start");
+				}
+				res.status(201).json({});
+			} else {res.status(401).json({message:"Compte à rebours déjà engagé."});}
+		} else if (mode == "VOTE") {
+			id = findID(req.body.id);
+			player_list[id].hasPlayed=true;
 			res.status(201).json({});
-		} else {res.status(401).json({message:"Compte à rebours déjà engagé."});}
+			if (checkPlayerRep()) {endVote();}
+		}
 	} else {res.status(401).json({message:"Erreur d'authentification"}); console.log('Erreur d\'authentification');}
 	
 });
@@ -247,5 +291,7 @@ app.post('/api/stuff', (req, res, next) => {
     message: 'Objet créé !'
   });
 });
+
+startVote();
 
 module.exports = app;

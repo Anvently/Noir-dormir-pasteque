@@ -6,6 +6,7 @@ player = {name:"test"};
 const url = "http://localhost:3000/";
 player_list =[];
 timer=null;
+vote_for=undefined;
 
 if (window.matchMedia('(min-width: 1000px)')) {
 	size = ["1.2vw","1.3vw","2vw","2.1vw"];
@@ -128,7 +129,7 @@ function baliseHover(el, force = false) {
 	}
 }
 
-function insertCard(balise,card) {
+function insertCard(balise,card,vote) {
 	if (balise.innerHTML!="□") {
 		addCard(balise.innerText);
 	}
@@ -220,11 +221,54 @@ function updateScores() {
 		} else {
 			newDiv = document.createElement("div");
 			newDiv.id="player_"+joueur.id;
+			newDiv.className="div_player";
 			newDiv.innerHTML=`
 				<p><strong>`+joueur.name+`</strong> : <span id="points_`+joueur.id+`">`+joueur.score+`</span> points</p>
 				<p class="vote" id="vote_`+joueur.id+`"><span id="nbr_votes_`+joueur.id+`">`+joueur.nbr_votes+`</span> vote(s)</p>
 			`
+			newDiv.addEventListener("mouseover", overPlayer);
+			newDiv.addEventListener("mousedown", selectPlayer);
 			content.appendChild(newDiv);
+		}
+	}
+}
+
+function overPlayer (e) {
+	if (mode=="VOTE") {
+		let i=e.target.id.split("_").at(-1)-1;
+		let n=0;
+		for (bal of document.querySelectorAll(".balise")) {
+			let card = player_list[i].cards_played[n];
+			if (!card) {
+				card="□";
+				bal.style.fontSize=size[2];
+				bal.style.color="rgb(255, 255, 0)";
+				bal.style.backgroundColor="transparent";
+			} else {
+				bal.style.fontSize=size[0];
+				bal.style.color="rgb(255, 255, 0)";
+				bal.style.backgroundColor="#6a9fab";
+			}
+			
+			bal.innerText=card;
+			n++;
+		}
+	}
+}
+
+function selectPlayer(e) {
+	if (mode == "VOTE") {
+		let i=e.target.id.split("_").at(-1);
+		if (vote_for) {
+			for (let child of document.getElementById("player_"+(vote_for)).children) 
+			{
+				child.style.color="#11323b";
+			}	
+		}
+		vote_for=i;
+		for (let child of document.getElementById("player_"+(vote_for)).children) 
+		{
+			child.style.color="rgb(255, 255, 0)";
 		}
 	}
 }
@@ -273,7 +317,7 @@ function deletePlayer() {
 	}
 }
 function update() {
-	$.post(url+"update",{id:player.id,password:player.password}, function (data, status){
+	$.post(url+"update",{id:player.id,password:player.password,vote_for:vote_for}, function (data, status){
 		if (status == "success") {
 				player_list=data.player_list;
 				if (data.player) {
@@ -295,7 +339,7 @@ function update() {
 							document.getElementById("btn_launch").innerText="Voter";
 						} else if (up == "timer_start") {
 							if (timer && timer.online == true) {updateTimer(true);}
-							document.getElementById("btn_launch").disabled=true;
+							if (mode=="ROOM") {document.getElementById("btn_launch").disabled=true;}
 							timer = data.timer;
 							timer.id = setInterval(() => {
 								updateTimer();
@@ -307,9 +351,13 @@ function update() {
 							
 						} else if (up == "start_vote") {
 							mode="VOTE";
+							document.getElementById("btn_launch").disabled=false;
 						}
 						
 					}
+				}
+				if (mode == "VOTE") {
+					updateScores();
 				}
 					
 			}		
