@@ -6,7 +6,7 @@ player = {name:"test"};
 const url = "http://localhost:3000/";
 player_list =[];
 timer=null;
-vote_for=undefined;
+vote_for=false;
 
 if (window.matchMedia('(min-width: 1000px)')) {
 	size = ["1.2vw","1.3vw","2vw","2.1vw"];
@@ -233,9 +233,15 @@ function updateScores() {
 	}
 }
 
+function findID(id) {
+		for (i = 0; i < player_list.length; i++){
+			if (player_list[i].id == id) {return i;}
+		}
+}
+
 function overPlayer (e) {
 	if (mode=="VOTE") {
-		let i=e.target.id.split("_").at(-1)-1;
+		let i=findID(e.target.id.split("_").at(-1));
 		let n=0;
 		for (bal of document.querySelectorAll(".balise")) {
 			let card = player_list[i].cards_played[n];
@@ -257,15 +263,18 @@ function overPlayer (e) {
 }
 
 function selectPlayer(e) {
-	if (mode == "VOTE") {
-		let i=e.target.id.split("_").at(-1);
-		if (vote_for) {
-			for (let child of document.getElementById("player_"+(vote_for)).children) 
+	if (vote_for) {
+		div_player=document.getElementById("player_"+(vote_for));
+		if (div_player) {
+			for (let child of div_player.children) 
 			{
 				child.style.color="#11323b";
 			}	
 		}
-		vote_for=i;
+	}
+	if (mode=="VOTE") {
+		let id=e.target.id.split("_").at(-1);
+		vote_for=id;
 		for (let child of document.getElementById("player_"+(vote_for)).children) 
 		{
 			child.style.color="rgb(255, 255, 0)";
@@ -315,6 +324,7 @@ function deletePlayer() {
 			i--;
 		}
 	}
+	
 }
 function update() {
 	$.post(url+"update",{id:player.id,password:player.password,vote_for:vote_for}, function (data, status){
@@ -348,10 +358,15 @@ function update() {
 							if (timer.online) {updateTimer(true);}
 							mode="VOTE"
 							sendCards();
-							
 						} else if (up == "start_vote") {
 							mode="VOTE";
 							document.getElementById("btn_launch").disabled=false;
+						}
+						else if (up == "end_vote") {
+							mode="PLAY";
+							selectPlayer(null);
+							vote_for=false;
+							updateScores();
 						}
 						
 					}

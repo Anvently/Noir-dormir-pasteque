@@ -41,10 +41,13 @@ function findID(id,player_list) {
 		for (i = 0; i < player_list.length; i++){
 			if (player_list[i].id == id) {return i;}
 		}
+		return false;
 	}
 	for (i = 0; i < players.length; i++){
 		if (players[i].id == id) {return i;}
 	}
+	return false;
+	
 }
 
 function pickQuestion() {
@@ -104,7 +107,7 @@ app.post('/register_player', (req, res, next) => {
   }
   if (timer.online==true) {player.updates.push("timer_start");}
   players.push(player);
-  player_list.push({name: player.name, id: id, vote_for: undefined, nbr_votes: 0, score: 0, cards_played: [], hasPlayed:false});
+  player_list.push({name: player.name, id: id, vote_for: false, nbr_votes: 0, score: 0, cards_played: [], hasPlayed:false});
   console.log(player.name+" a rejoint la partie. "+player_list.length+" joueurs.");
   console.log(player_list);
   
@@ -114,6 +117,7 @@ app.post('/register_player', (req, res, next) => {
 app.post('/player_left', (req, res, next) => {
   if (check_ids(req.body.id,req.body.password)) {
 		id = findID(req.body.id);
+		if (mode == "VOTE") {handleVote(id,false);}
 		player=players.splice(id,1)[0];
 		player_list.splice(id,1);
 		for (joueur of players) {
@@ -135,6 +139,7 @@ app.post('/get_question', (req, res, next) => {
 function launchGame() {
 	mode = "PLAY";
 	console.log("Lancement d'un nouveau round.");
+	console.log(player_list);
 	question=pickQuestion();
 	timer.id = setInterval(() => {
 				handleTimer();
@@ -177,6 +182,7 @@ function endRound() {
 }
 
 function startVote() {
+	mode="VOTE";
 	if (timer.online) {handleTimer(true);}
 	for (player of player_list) {
 		player.hasPlayed=false;
@@ -197,21 +203,46 @@ function startVote() {
 }
 
 function handleVote(i, vote_for) {
-	console.log(player_list);
 	//on retire l'ancien vote si il y en a un
 	if (player_list[i].vote_for) {
 		let id = findID(player_list[i].vote_for,player_list);
-		player_list[id].nbr_votes--;
+		if (id!==false) {player_list[id].nbr_votes--;}
 	}
 	// on ajoute le nouveau vote
-	let id = findID(vote_for,player_list);
-	player_list[id].nbr_votes++;
-	player_list[i].vote_for=vote_for;
-	
+	if (vote_for != "false" && vote_for!==false) {
+		let id = findID(vote_for,player_list);
+		player_list[id].nbr_votes++;
+		player_list[i].vote_for=vote_for;
+	}
+}
+
+function handleScore() {
+	let best_score={id:undefined,nbr_votes:0,only:true};
+	for (player of player_list) {
+		if (player.nbr_votes>best_score.nbr_votes){
+			best_score={id:player.id, nbr_votes:player.nbr_votes, only:true};
+		}
+		else if (player.nbr_votes==best_score.nbr_votes){best_score.only=false;}
+	}
+	for (player of player_list) {
+		player.score=player.score+player.nbr_votes;
+		if (best_score.only && best_score.id==player.id) {player.score=player.score+1;}
+		player.nbr_votes=0;
+	}
 }
 
 function endVote() {
 	console.log("Fin du vote");
+	mode="ROOM";
+	handleScore();
+	for (player of players){
+		player.updates.push("end_vote");
+	}
+	for (player of player_list) {
+		player.hasPlayed=false;
+		player.vote_for=false;
+	}
+	launchGame();
 }
 
 function checkPlayerRep() {
@@ -232,6 +263,7 @@ function handleTimer(end) {
 }
 
 function filterCards(cards,cards_played) {
+	if (!cards_played) {return [];}
 	for (el of cards_played) {
 		i = cards.find(e => e==el);
 		console.log(i);
@@ -262,7 +294,7 @@ app.post('/ask_launch', (req, res, next) => {
 			id = findID(req.body.id);
 			player_list[id].hasPlayed=true;
 			res.status(201).json({});
-			if (checkPlayerRep()) {endVote();}
+			if (checkPlayerRep()) {handleTimer(true);}
 		}
 	} else {res.status(401).json({message:"Erreur d'authentification"}); console.log('Erreur d\'authentification');}
 	
