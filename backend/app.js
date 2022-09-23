@@ -2,7 +2,12 @@ const express = require('express');
 const app = express();
 const bp = require('body-parser');
 const questions = require('./questions.json');
+const {execSync} = require("child_process");
 
+const cmd = `curl -s http://checkip.amazonaws.com || printf "0.0.0.0"`;
+const pubIp = execSync(cmd).toString().trim();
+
+console.log(`Adresse publique: ${pubIp}`);
 const deck = ["les grands donateurs de la banque de sperme","le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"];
 const timer = {id:null,duration:null,time:null,message:null,type:null,online:false,end:null};
 const players = [
@@ -10,9 +15,9 @@ const players = [
 	//{name: "herroN", updates: [], password: "bbb", id: 2, cards: ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"],cards_played: ["l'aspirine","brigitte"]}
 ];
 round=0;
-mode = "VOTE";
-const options = {game_launch_duration:3,round_launch_duration:10,round_duration:25,vote_duration:300,end_round_duration:5}
-
+mode = "ROOM";
+const options = {game_launch_duration:5,round_launch_duration:5,round_duration:25,vote_duration:300,end_round_duration:5}
+const src = '../frontend/full.htm';
 const player_list = [
 	//{name: "herroZ", id: 1, nbr_votes: 0, vote_for: undefined, score: 0, cards_played: ["l'aspirine","pépé dans mémé"], hasPlayed: true},
 	//{name: "herroN", id: 2, nbr_votes: 0, vote_for: undefined, score: 0, cards_played: ["l'aspirine","brigitte"], hasPlayed: true}
@@ -68,13 +73,22 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
   res.setHeader('Content-Type','application/json');
+  
   next();
 });
 
+var path = require('path');
 
-app.get('/test', (req, res, next) => {
-  res.status(200).end("test");
+
+
+app.get('/', function(req, res) {
+	let fs = require('fs');
+
+	res.writeHead(200, { 'Content-Type':'text/html'});
+	html = fs.readFileSync(path.resolve(src),{encoding:'utf-8'});
+	res.end(html);
 });
+
 
 app.post('/update', (req, res, next) => {
 	if (check_ids(req.body.id,req.body.password)) {
@@ -187,9 +201,6 @@ function startVote() {
 	for (player of player_list) {
 		player.hasPlayed=false;
 	}
-	for (player of players) {
-		player.updates.push("start_vote");
-	}
 	console.log("Démarrage du vote");
 	timer.id = setInterval(() => {
 				handleTimer();
@@ -200,6 +211,10 @@ function startVote() {
 	timer.message="Fin du vote dans  ";
 	timer.duration=options.vote_duration;
 	timer.time=options.vote_duration;
+	for (player of players) {
+		player.updates.push("start_vote");
+		player.updates.push("timer_start");
+	}
 }
 
 function handleVote(i, vote_for) {
@@ -324,6 +339,5 @@ app.post('/api/stuff', (req, res, next) => {
   });
 });
 
-startVote();
 
 module.exports = app;

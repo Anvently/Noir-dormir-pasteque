@@ -3,10 +3,12 @@ dragObj=undefined;
 oldObj=undefined;
 balise=undefined;
 player = {name:"test"};
-const url = "http://localhost:3000/";
+const url = "http://213.245.177.161:3000/";
 player_list =[];
 timer=null;
 vote_for=false;
+mode="ROOM";
+
 
 if (window.matchMedia('(min-width: 1000px)')) {
 	size = ["1.2vw","1.3vw","2vw","2.1vw"];
@@ -290,12 +292,15 @@ function getsa(type="",) {
 
 
 function register(pseudo) {
-
+	
+	console.log("tentaive d'enregistrement vers : "+url);	
 	$.post(url+"register_player",{name:pseudo}, function (data, status){
 				if (status == "success") {
 					player = data;
-					
+			
 					window.parent.document.title = player.name;
+				} else {
+					console.log("Echec de la requête vers : "+url);
 				}
 				
 		});
