@@ -11,12 +11,12 @@
 				width: 98vw;
 				font-size: 1vw;
 				font-family: Verdana;
-				overflow: hidden;
+				overflow-x: hidden;
+				overflow-y: auto;
 				-webkit-user-select: none; /* Safari */        
 				-moz-user-select: none; /* Firefox */
 				-ms-user-select: none; /* IE10+/Edge */
 				user-select: none; /* Standard */
-				background-image: url("double-bubble.png");
 				background-repeat: x;
 			}
 			#main_box
@@ -70,6 +70,11 @@
 			{
 				background-color: #e7e7e7;
 				
+			}
+			#carte_question
+			{
+				visibility: collapse;
+				display:none;
 			}
 			.vide header h1 
 			{
@@ -139,16 +144,24 @@
 				text-align: center;
 				color: #11323b;
 				background-color: #c24f54;
-				overflow-y: auto;
+				
 
 			}
 			#score header
 			{
 				border-bottom: 0.1vw solid black;
+				height:10%
 			}
+
 			#score #content
 			{
 				font-size: 0.8vw;
+				overflow-y:auto;
+				height:70%;
+			}
+			#commands
+			{
+				height:20%
 			}
 			#score #content div:hover
 			{
@@ -158,6 +171,9 @@
 				padding: 0%;
 			}
 			.div_player > * {
+				 pointer-events: none;
+			}
+			.carte > * {
 				 pointer-events: none;
 			}
 			#score #content div:active
@@ -201,18 +217,22 @@
 		</style>
 		<style media="screen and (max-width: 1000px)">
 		
+			document
+			{
+				overflow: hidden;
+			}
 			body
 			{
 				height: 98vh;
 				width: 98vw;
 				font-size: 1.7vh;
 				font-family: Verdana;
-				overflow: hidden;
+				overflow-x: hidden;
+				overflow-y: auto;
 				-webkit-user-select: none; /* Safari */        
 				-moz-user-select: none; /* Firefox */
 				-ms-user-select: none; /* IE10+/Edge */
 				user-select: none; /* Standard */
-				background-image: url("double-bubble.png");
 				background-repeat: x;
 
 			}
@@ -270,6 +290,11 @@
 				background-color: #e7e7e7;
 				
 			}
+			#carte_question
+			{
+				visibility: collapse;
+				display: none;
+			}
 			.vide header h1 
 			{
 				background-color: #a3d5e0;
@@ -300,12 +325,12 @@
 			#top_plateau span.balise
 			{
 				font-size: 4vh;
+				color: rgb(255, 255, 0);
 			}
 			#bottom_plateau
 			{
 				display: flex;
 				flex-wrap: wrap;
-
 				justify-content: center;
 				align-items: center;
 				width: 100%;
@@ -333,7 +358,7 @@
 			#score header
 			{
 				border-bottom: 0.1vh solid black;
-				height: 7%;
+				height: 10%;
 			}
 			#score header h1
 			{
@@ -344,6 +369,12 @@
 			#score #content
 			{
 				font-size: 1.5vh;
+				overflow-y: auto;
+				height:70%;
+			}
+			#score #commands
+			{
+				height:20%;
 			}
 			#score #content div:hover
 			{
@@ -373,6 +404,9 @@
 				color: white;
 			}
 			.div_player > * {
+				 pointer-events: none;
+			}
+			.carte > * {
 				 pointer-events: none;
 			}
 
@@ -408,6 +442,7 @@
 	
 	
 <body>
+
 	<div id="main_box">
 
 		<div id="plateau">
@@ -420,7 +455,7 @@
 				</div>
 			</div>
 			<div id="bottom_plateau">
-				<div id="carte_question" class="carte joue vide" style="visibility:collapse;">
+				<div id="carte_question" class="carte joue vide">
 					<header>
 						<h1>Carte 1</h1>
 					</header>
@@ -451,19 +486,19 @@
 	</div>
 	
 	<div id="main">
-			<div class="carte" style='visibility:collapse'>
+			<div class="carte" style='display:none;'>
 				<header>
-					<h1>herroP</h1>
+					<h1></h1>
 				</header>
 				<div class="content">
-					<p>Un autocollant "enfants à bord".</p>
+					<p></p>
 				</div>
 			</div>
 				
 				
 
 	</div>
-	
+
 	
 	
 
@@ -478,23 +513,29 @@
 			const url = document.location.href;
 			player_list =[];
 			timer=null;
+			timerClick=null;
 			vote_for=false;
-			mode="ROOM";
+			objScroll=null;
+			mode=undefined;
+			var scroll=true;
+			mobile=false;
+			selectedPlayer={id:undefined,count:0};
+			const width  = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+			const height = window.innerHeight|| document.documentElement.clientHeight|| document.body.clientHeight;
+
+			if (window.matchMedia('(min-width: 1000px)').matches) {
+				size = ["1.2vw","1.3vw","2vw","2.1vw"];
+			} else if (window.matchMedia('(max-width: 1000px)').matches) {
+				mobile=true;
+				size = ["2.5vh","2.6vh","4vh","4.1vh"];
+			}
+
+			window.parent.document.title = "Noir dormir pastèque";
 			
 
-			if (window.matchMedia('(min-width: 1000px)')) {
-				size = ["1.2vw","1.3vw","2vw","2.1vw"];
-			} else if (window.matchMedia('(max-width: 1000px)')) {
-				console.log("ouais");
-				size = ["1.7vh","1.8vh","2.5vh","2.6vh"];
-			}
-			playerName="herroP";
-			for (var obj of document.querySelectorAll(".carte:not(.joue)")) {
-				obj.addEventListener('mousedown', initDnD);
-			}
-
 			document.addEventListener('mousemove', DnDMove);
-			document.addEventListener("touchend", endDnD);
+			document.addEventListener('touchmove', listener, {passive:false});			
+			document.addEventListener("mouseup", clickEnd);
 
 
 			function initQuestion(question) {
@@ -525,18 +566,44 @@
 				}
 				return txt;
 			}
+			
+			function clickStart(e) {
+				if (!e.isTrusted) {
+					timerClick = setTimeout(initDnD,200);
+					objScroll=e.currentTarget;
+				} else {
+					objScroll=e.currentTarget;
+					initDnD();
+				}
+			}
+			
+			function clickEnd(e) {
+				clearTimeout(timerClick);
+				endDnD(e);
+				scroll=true;
+				
+			}
+			
+			function listener(e) {
+				if (! scroll) {
+					e.preventDefault();
+					
+				} 
+			}
 
-			function initDnD(e) {
+			
+			function initDnD() {
 				if (mode=="PLAY") {
-					var x = e.currentTarget.offsetLeft;
-					var y = e.currentTarget.offsetTop;
-					dragObj=e.currentTarget.cloneNode(true);
-					e.currentTarget.style.visibility = "hidden"; 
-					oldObj=e.currentTarget;
+					scroll=false;
+					var x = objScroll.offsetLeft;
+					var y = objScroll.offsetTop;
+					dragObj=objScroll.cloneNode(true);
+					objScroll.style.visibility = "hidden"; 
+					oldObj=objScroll;
 					dragObj.style.position="absolute";
 					dragObj.style.left=String(x)+"px";
 					dragObj.style.top=String(y)+"px";
-					document.body.addEventListener('mouseup', endDnD);
+					document.body.addEventListener('mouseup', clickEnd);
 					document.body.appendChild(dragObj);
 					
 				}
@@ -545,13 +612,14 @@
 
 
 			function DnDMove(e) {
+				clearTimeout(timerClick);
 				if (dragObj != undefined) {
 					dragObj.style.left=String(e.clientX)+"px";
 					dragObj.style.top=String(e.clientY)+"px";
 				}
 				var x = e.clientX, y = e.clientY;
-				var width  = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-				var height = window.innerHeight|| document.documentElement.clientHeight|| document.body.clientHeight;
+				
+
 				if (!(x>width || y>height || x<0 || y<0)) { //si on est toujours dans la fenêtre
 					var el=document.elementFromPoint(x,y);
 					baliseHover(el); //si on entre sur la balise, 
@@ -564,7 +632,7 @@
 
 
 			function baliseHover(el, force = false) {
-				if (el.innerText=="□" || (balise && balise.innerText=="□")) { //On gère le hover lorsque les balises sont vides
+				if (el && (el.innerText=="□" || (balise && balise.innerText=="□"))) { //On gère le hover lorsque les balises sont vides
 					if (balise && el.id != balise.id){ //cas où on sort de la balise 
 						if (balise.innerText != "□") { balise.style.fontSize = size[0]; } else {balise.style.fontSize = size[2];} //cas particulier où l'on vient d'une balise non vide
 						if (el.className=="balise") { //si on réentre dans l'autre balise. 
@@ -589,7 +657,7 @@
 					balise = undefined;
 					baliseHover(el);
 					}
-				else if (el.className=="balise" && force == false) { //si l'élémnt parcouru est une balise et que force est faux
+				else if (el && (el.className=="balise" && force == false)) { //si l'élémnt parcouru est une balise et que force est faux
 					balise = el;
 					if (getComputedStyle(balise).color != "rgb(255, 255, 0)") { //si on est pas déjà entré sur l'objet
 						balise.style.color="rgb(255, 255, 0)";
@@ -611,11 +679,13 @@
 					balise.style.backgroundColor="#6a9fab";
 				}
 				contenu=card.querySelector("p").innerHTML;
-				balise.innerHTML=contenu.toLowerCase();
+				if (balise.parentNode.childNodes[0] == balise) {balise.innerHTML=contenu;}
+				else {balise.innerHTML=contenu.toLowerCase();}
 				balise.style.fontSize=getComputedStyle(balise.parentNode).fontSize;
 				id="carte_"+balise.id.split("_").at(-1);
 				document.getElementById(id).className="carte";
 				document.getElementById(id).querySelector("p").innerHTML=contenu;
+				document.getElementById(id).addEventListener("mousedown",removeCard);
 				player.cards_played[parseInt(id.split("_").at(-1))]=contenu.toLowerCase();
 				balise.addEventListener("mousedown",removeCard);
 			}
@@ -623,12 +693,18 @@
 				new_card=document.getElementById("main").children[0].cloneNode(true);
 				text=text.charAt(0).toUpperCase() + text.slice(1);
 				new_card.querySelector("p").innerHTML=text;
-				new_card.querySelector("h1").innerHTML=playerName;
+				new_card.querySelector("h1").innerHTML=player.name;
 				new_card.style.visibility="visible";
+				new_card.style.display="block";
 				document.getElementById("main").appendChild(new_card);
-				new_card.addEventListener('mousedown', initDnD);
+				new_card.addEventListener('mousedown', clickStart);
+				
 			}
 			function removeCard(e) {
+				el=document.elementFromPoint(e.clientX,e.clientY);
+				if (el.id.split("_")[0] == "carte") {
+					balise = document.getElementById("balise_"+el.id.split("_")[1]);
+				}
 				if (balise && balise.innerText!="□" && mode == "PLAY") { 
 					carte=document.getElementById("carte_"+balise.id.at(-1));
 					carte.querySelector("p").innerText="Placez une carte dans un trou.";
@@ -637,6 +713,7 @@
 					balise.innerText="□";
 					balise.style.fontSize=size[2];
 					balise.style.backgroundColor="transparent";
+					balise.style.color="rgb(255, 255, 0)";
 					player.cards_played[parseInt(balise.id.split("_").at(-1))]=undefined;
 
 				}				
@@ -653,16 +730,19 @@
 				
 				if (mode== "PLAY" && dragObj != undefined) {
 					oldObj.style.visibility = "visible";
-					if (balise) {
-						insertCard(balise,oldObj);
-						oldObj.parentNode.removeChild(oldObj);
-						document.body.removeChild(dragObj);
-						document.body.removeEventListener('mouseup', endDnD);
-						dragObj=undefined;
-						baliseHover(balise,true);
-						return;
+					
+					if (e) {
+						el=document.elementFromPoint(e.clientX,e.clientY);
+						if (el.id.split("_")[0] == "carte") 
+						{
+							balise = document.getElementById("balise_"+el.id.split("_")[1]);
+						}
+						if (balise) {
+							insertCard(balise,oldObj);
+							oldObj.parentNode.removeChild(oldObj);
+							baliseHover(balise,true);
+						}
 					}
-						
 					
 
 					document.body.removeChild(dragObj);
@@ -701,7 +781,7 @@
 							<p class="vote" id="vote_`+joueur.id+`"><span id="nbr_votes_`+joueur.id+`">`+joueur.nbr_votes+`</span> vote(s)</p>
 						`
 						newDiv.addEventListener("mouseover", overPlayer);
-						newDiv.addEventListener("mousedown", selectPlayer);
+						newDiv.addEventListener("mouseup", selectPlayer);
 						content.appendChild(newDiv);
 					}
 				}
@@ -731,12 +811,26 @@
 						}
 						
 						bal.innerText=card;
+						
 						n++;
 					}
 				}
 			}
 
-			function selectPlayer(e) {
+			function selectPlayer(e) {			
+				if (e && mobile) {
+					let id = e.target.id;
+					if (selectedPlayer.id == id) {
+						selectedPlayer.count++;
+						if (selectedPlayer.count!=4) {
+							return;
+						}
+					} else {
+						selectedPlayer.count=1;
+						selectedPlayer.id=id;
+						return;
+					}
+				}
 				if (vote_for) {
 					div_player=document.getElementById("player_"+(vote_for));
 					if (div_player) {
@@ -821,6 +915,7 @@
 										mode = "PLAY";
 										document.getElementById("btn_launch").disabled=true;
 										document.getElementById("btn_launch").innerText="Voter";
+										player.cards_played=[];
 									} else if (up == "timer_start") {
 										if (timer && timer.online == true) {updateTimer(true);}
 										if (mode=="ROOM") {document.getElementById("btn_launch").disabled=true;}
@@ -829,9 +924,10 @@
 											updateTimer();
 									},1000);
 									} else if (up == "end_round") {
-										if (timer.online) {updateTimer(true);}
-										mode="VOTE"
+										if (timer.online) {updateTimer(true);}										
+										endDnD();
 										sendCards();
+										mode = "VOTE";
 									} else if (up == "start_vote") {
 										mode="VOTE";
 										document.getElementById("btn_launch").disabled=false;
@@ -863,6 +959,7 @@
 				}
 			}
 			function askLaunch() {
+				if (mode=="VOTE" && !vote_for) {return;}
 				$.post(url+"ask_launch",{id:player.id,password:player.password}, function (data, status){
 						if (status == "success") {
 							document.getElementById("btn_launch").disabled=true;
@@ -874,7 +971,6 @@
 				console.log(player.cards_played);
 				$.post(url+"send_cards",{id:player.id,password:player.password,cards_played:player.cards_played}, function (data, status){
 						if (status == "success") {
-							mode = "VOTE";
 							player = data;
 							deleteCards();
 							for (card in player.cards) {
@@ -895,6 +991,10 @@
 			}
 			document.addEventListener("touchstart", touchHandler);
 			document.addEventListener("touchmove", touchHandler);
+			document.addEventListener("touchend", touchHandler);
+			window.addEventListener('blur', function (e) {
+				endDnD();
+			});
 			window.addEventListener('beforeunload', quit); 
 
 			register(prompt("Entrez votre pseudo", ""));

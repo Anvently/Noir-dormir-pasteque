@@ -15,13 +15,10 @@ const players = [
 	//{name: "herroN", updates: [], password: "bbb", id: 2, cards: ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"],cards_played: ["l'aspirine","brigitte"]}
 ];
 round=0;
-mode = "ROOM";
-const options = {game_launch_duration:5,round_launch_duration:5,round_duration:25,vote_duration:300,end_round_duration:5}
+mode = "PLAY";
+const options = {game_launch_duration:5,round_launch_duration:5,round_duration:30,vote_duration:25,end_round_duration:5}
 const src = '../frontend/full.htm';
-const player_list = [
-	//{name: "herroZ", id: 1, nbr_votes: 0, vote_for: undefined, score: 0, cards_played: ["l'aspirine","pépé dans mémé"], hasPlayed: true},
-	//{name: "herroN", id: 2, nbr_votes: 0, vote_for: undefined, score: 0, cards_played: ["l'aspirine","brigitte"], hasPlayed: true}
-	];
+const player_list = [];
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
@@ -104,7 +101,7 @@ app.post('/update', (req, res, next) => {
 });
 
 app.post('/register_player', (req, res, next) => {
-  var id=players.length > 0 && players.at(-1).id+1 || 1;
+  var id=player_list.length > 0 && player_list.at(-1).id+1 || 1;
   var crypto = require("crypto");
   var pswd = crypto.randomBytes(20).toString('hex');
   player={name: req.body.name, password: pswd, cards_played: [], id: id, cards: [], updates: ['new_player']};
@@ -318,11 +315,12 @@ app.post('/ask_launch', (req, res, next) => {
 app.post('/send_cards', (req, res, next) => {
 	if (check_ids(req.body.id,req.body.password)) {  
 	  id = findID(req.body.id);
-	  player_list[id].cards_played=req.body.cards_played;
+	  player_list[id].cards_played=!req.body.cards_played ? [] : req.body.cards_played;
+	  players.length > 0 && players.at(-1).id+1 || 1;
 	  player_list[id].hasPlayed=true;
 	  players[id].cards = filterCards(players[id].cards,player_list[id].cards_played);
 	  players[id].cards=generateCards(players[id].cards);
-	  console.log(player_list[id].cards_played);
+	  console.log(req.body.cards_played,player_list[id].cards_played);
 	  res.status(201).json(players[id]);
 	  if (checkPlayerRep()) {handleTimer(true);}
 	} else {res.status(401).json({message:"Erreur d'authentification"}); console.log('Erreur d\'authentification');}
@@ -339,5 +337,5 @@ app.post('/api/stuff', (req, res, next) => {
   });
 });
 
-
+launchGame();
 module.exports = app;
