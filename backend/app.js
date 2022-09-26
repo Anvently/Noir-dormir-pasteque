@@ -8,17 +8,20 @@ const cmd = `curl -s http://checkip.amazonaws.com || printf "0.0.0.0"`;
 const pubIp = execSync(cmd).toString().trim();
 
 console.log(`Adresse publique: ${pubIp}`);
-const deck = ["les grands donateurs de la banque de sperme","le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"];
+const deck = require('./main_deck.json');
 const timer = {id:null,duration:null,time:null,message:null,type:null,online:false,end:null};
 const players = [
 	//{name: "herroZ", updates: [], password: "bbb", id: 1, cards: ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"],cards_played: ["l'aspirine","pépé dans mémé"]},
 	//{name: "herroN", updates: [], password: "bbb", id: 2, cards: ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"],cards_played: ["l'aspirine","brigitte"]}
 ];
 round=0;
-mode = "PLAY";
+mode = "ROOM";
 const options = {game_launch_duration:5,round_launch_duration:5,round_duration:30,vote_duration:25,end_round_duration:5}
 const src = '../frontend/full.htm';
 const player_list = [];
+
+deck_game = deck;
+questions_game = questions;
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
@@ -26,7 +29,10 @@ function getRandomInt(max) {
 }
 function generateCards(cards=[]) {
 	while (!cards || cards.length < 7) {
-		cards.push(deck[getRandomInt(deck.length)]);
+		if (deck_game.length < 1) {
+			deck_game=deck;
+		}
+		cards.push(deck_game.splice(getRandomInt(deck.length),1)[0]);
 	}
 	return cards;
 	
@@ -53,7 +59,10 @@ function findID(id,player_list) {
 }
 
 function pickQuestion() {
-	return questions[getRandomInt(questions.length)];
+	if (questions_game.length < 1) {
+		questions_game=questions;
+	}	
+	return questions_game.splice(getRandomInt(questions_game.length),1)[0];
 }
 
 
@@ -337,5 +346,4 @@ app.post('/api/stuff', (req, res, next) => {
   });
 });
 
-launchGame();
 module.exports = app;

@@ -1,0 +1,8 @@
+{
+  "name": "Noir dormir pasteque",
+  "description": "Une copie à usage privé d'un jeu célèbre",
+  "repository": "https://github.com/Anvently/Noir-dormir-pasteque",
+  "logo": "",
+  "keywords": ["node", "express", "heroku"],
+  "image": "heroku/nodejs"
+}
