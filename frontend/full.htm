@@ -103,6 +103,18 @@
 				border-radius: 0.5vw;
 				word-wrap: normal;
 			}
+			#text_question
+			{
+				height:88%;
+				overflow-y:auto;
+				display:flex;
+				margin-top:-1%;
+			}
+			#text_question p 
+			{
+				text-align: center;
+				margin: auto;
+			}
 			#top_plateau span.balise
 			{
 				font-size: 2vw;
@@ -152,16 +164,30 @@
 				border-bottom: 0.1vw solid black;
 				height:10%
 			}
-
+			#btn_launch
+			{
+			    width: 9vw;
+				font-size: 1vw;
+				height: 2.5vw;
+				font-family: verdana;
+				color: white;
+				border: 1px solid white;
+				border-radius: 5px;
+				background-color: #6a9fab;
+			}
+			#btn_launch:disabled
+			{
+				background-color:#e7e7e7;
+			}
 			#score #content
 			{
-				font-size: 0.8vw;
+				font-size: 1vw;
 				overflow-y:auto;
-				height:70%;
+				height:65%;
 			}
 			#commands
 			{
-				height:20%
+				height:25%
 			}
 			#score #content div:hover
 			{
@@ -192,11 +218,11 @@
 				font-size: 0.7vw;
 				margin: 0%;
 			}
-			#score #timer
+			#score #commands > p
 			{
 				color: white;
+				font-size: 1.1vw;
 			}
-
 			#main
 			{
 				display: flex;
@@ -322,10 +348,25 @@
 				border-radius: 0.5vh;
 				word-wrap: normal;
 			}
+			#question header 
+			{
+				
+			}
+			#question #text_question
+			{
+				display:flex;
+				height:91%;
+				overflow-y:auto;
+			}
 			#top_plateau span.balise
 			{
 				font-size: 4vh;
 				color: rgb(255, 255, 0);
+			}
+			#question p
+			{
+				margin:auto;
+				text-align:center;
 			}
 			#bottom_plateau
 			{
@@ -368,13 +409,13 @@
 			}
 			#score #content
 			{
-				font-size: 1.5vh;
+				font-size: 1.7vh;
 				overflow-y: auto;
-				height:70%;
+				height:65%;
 			}
 			#score #commands
 			{
-				height:20%;
+				height:25%;
 			}
 			#score #content div:hover
 			{
@@ -393,15 +434,33 @@
 			#score #content p
 			{
 				margin: 3%;
+				
 			}
 			#score p.vote
 			{
 				font-size: 1.3vh;
 				margin: 0px;
 			}
-			#score #timer
+			#score #commands > p
 			{
 				color: white;
+				margin-bottom: 0.8vh;
+				font-size: 1.9vh;
+			}
+			#btn_launch
+			{
+			    width:85%;
+				font-size: 1.8vh;
+				height:35%;
+				font-family: verdana;
+				color: white;
+				border: 1px solid white;
+				border-radius: 5px;
+				background-color: #6a9fab;
+			}
+			#btn_launch:disabled
+			{
+				background-color: #e7e7e7;
 			}
 			.div_player > * {
 				 pointer-events: none;
@@ -451,7 +510,9 @@
 					<header>
 						<h1>Question</h1>
 					</header>
-					<p></p>
+					<div id="text_question">
+						<p></p>
+					</div>
 				</div>
 			</div>
 			<div id="bottom_plateau">
@@ -477,8 +538,7 @@
 
 			</div>
 			<div id="commands">
-			<p><span id="timer"></span></p>
-			<button id="btn" onclick="stop()">Eteindre</button>
+			<p><span id="titre_phase">Salle d'attente</span><span id="timer"></span></p>
 			<button id="btn_launch" onclick="askLaunch()">Commencer la partie</button>
 			</div>
 
@@ -553,7 +613,7 @@
 					document.getElementById("bottom_plateau").appendChild(newCarte);
 					count+=1;
 				}
-				document.getElementById("question").children[1].innerHTML = question;
+				document.querySelector("#text_question > p").innerHTML = question;
 			}
 
 			function getText(obj) {
@@ -626,6 +686,7 @@
 				}
 				else { //cas où on sort de la fenêtre 
 					endDnD(e);
+					console.log("sortie de l fenetre : ",x,y,width,height);
 				}
 				
 			}
@@ -913,6 +974,7 @@
 									} else if (up == "new_round") {
 										initQuestion(data.question);
 										mode = "PLAY";
+										document.getElementById("titre_phase").innerText="Phase de jeu";
 										document.getElementById("btn_launch").disabled=true;
 										document.getElementById("btn_launch").innerText="Voter";
 										player.cards_played=[];
@@ -930,12 +992,15 @@
 										mode = "VOTE";
 									} else if (up == "start_vote") {
 										mode="VOTE";
+										document.getElementById("titre_phase").innerText="Phase de vote";
 										document.getElementById("btn_launch").disabled=false;
 									}
 									else if (up == "end_vote") {
 										mode="PLAY";
 										selectPlayer(null);
 										vote_for=false;
+										selectedPlayer.id=undefined;
+										selectedPlayer.count=0;
 										updateScores();
 									}
 									
@@ -950,7 +1015,7 @@
 			}
 			function updateTimer(end) {
 				timer.time--;
-				document.getElementById("timer").innerText=timer.time+"s";
+				document.getElementById("timer").innerText=" : "+timer.time+"s";
 				if (timer.time == 0 || end == true) {
 					clearInterval(timer.id);
 					timer.id=null;
