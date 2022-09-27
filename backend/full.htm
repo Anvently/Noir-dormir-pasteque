@@ -348,10 +348,6 @@
 				border-radius: 0.5vh;
 				word-wrap: normal;
 			}
-			#question header 
-			{
-				
-			}
 			#question #text_question
 			{
 				display:flex;
@@ -570,7 +566,7 @@
 			oldObj=undefined;
 			balise=undefined;
 			player = {};
-			const url = document.location.href.split(/[?#]/);
+			const url = document.location.href.split(/[?#]/)[0];
 			player_list =[];
 			timer=null;
 			timerClick=null;
@@ -911,11 +907,6 @@
 				}
 			}
 
-			function getsa(type="",) {
-				$.get("http://localhost:3000/"+type, function (data, status){
-					console.log(typeof(data));
-					});
-			}
 
 
 			function register(pseudo) {

@@ -10,16 +10,13 @@ const pubIp = execSync(cmd).toString().trim();
 console.log(`Adresse publique: ${pubIp}`);
 const deck = require('./main_deck.json');
 const timer = {id:null,duration:null,time:null,message:null,type:null,online:false,end:null};
-const players = [
-	//{name: "herroZ", updates: [], password: "bbb", id: 1, cards: ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"],cards_played: ["l'aspirine","pépé dans mémé"]},
-	//{name: "herroN", updates: [], password: "bbb", id: 2, cards: ["Les grands donateurs de la banque de sperme","Le botox","21cm de bonheur","un autocollant 'enfant à bord'","le botox","petits efforts, gros résultats"],cards_played: ["l'aspirine","brigitte"]}
-];
+const players = [];
 round=0;
 mode = "ROOM";
-const options = {game_launch_duration:5,round_launch_duration:5,round_duration:30,vote_duration:25,end_round_duration:5}
-const src = '../frontend/full.htm';
-const player_list = [];
+const options = {game_launch_duration:15,round_launch_duration:5,round_duration:60,vote_duration:120,end_round_duration:5}
 
+const src = './full.htm';
+const player_list = [];
 deck_game = deck;
 questions_game = questions;
 
@@ -65,7 +62,19 @@ function pickQuestion() {
 	return questions_game.splice(getRandomInt(questions_game.length),1)[0];
 }
 
-
+setInterval(() => {
+	if (players) {
+		let time = Date.now()/1000;
+		playersCopie=players;
+		for (player of playersCopie) {
+			if (time-player.wake > 15) {
+				console.log("joueur hors ligne : "+player.name);
+				playerLeft(findID(player.id));
+			}
+		}
+	}
+	
+},3000);
 
 
 question = pickQuestion();
@@ -102,6 +111,7 @@ app.post('/update', (req, res, next) => {
 		if (mode=="VOTE" && req.body.vote_for != player_list[id].vote_for) {handleVote(id,req.body.vote_for);}
 		ans = {player_list: player_list,player: undefined,timer:{id:null,time:timer.time,duration:timer.duration,type:timer.type,online:timer.online},question:question};
 		if (players[id].updates) {ans.player=players[id];}
+		players[id].wake=Date.now()/1000;
 		res.status(201).json(ans);
 		players[id].updates=[];
 	} else {res.status(401).json({message:"Erreur d'authentification"}); console.log('Erreur d\'authentification');}
@@ -113,7 +123,7 @@ app.post('/register_player', (req, res, next) => {
   var id=player_list.length > 0 && player_list.at(-1).id+1 || 1;
   var crypto = require("crypto");
   var pswd = crypto.randomBytes(20).toString('hex');
-  player={name: req.body.name, password: pswd, cards_played: [], id: id, cards: [], updates: ['new_player']};
+  player={name: req.body.name, password: pswd, cards_played: [], wake:Date.now()/1000, id: id, cards: [], updates: ['new_player']};
   for (let joueur of players) {
 	  joueur.updates.push("new_player");
   }
@@ -136,15 +146,7 @@ app.post('/register_player', (req, res, next) => {
 
 app.post('/player_left', (req, res, next) => {
   if (check_ids(req.body.id,req.body.password)) {
-		id = findID(req.body.id);
-		if (mode == "VOTE") {handleVote(id,false);}
-		player=players.splice(id,1)[0];
-		player_list.splice(id,1);
-		for (joueur of players) {
-			joueur.updates.push("player_left");
-		} 
-		console.log(player.name+" a quitté la partie. "+player_list.length+" joueurs.");
-		console.log(player_list);
+		playerLeft(findID(req.body.id));
 	} else {res.status(401).json({message:"Erreur d'authentification"}); console.log('Erreur d\'authentification');}
 	
 });
@@ -155,6 +157,17 @@ app.post('/get_question', (req, res, next) => {
 	} else {res.status(401).json({message:"Erreur d'authentification"}); console.log('Erreur d\'authentification');}
 	
 });
+
+function playerLeft(id) {
+	if (mode == "VOTE") {handleVote(id,false);}
+	player=players.splice(id,1)[0];
+	player_list.splice(id,1);
+	for (joueur of players) {
+		joueur.updates.push("player_left");
+	} 
+	console.log(player.name+" a quitté la partie. "+player_list.length+" joueurs.");
+	console.log(player_list);
+}
 
 function launchGame() {
 	mode = "PLAY";
